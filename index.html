@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViralHub - ভাইরাল মিম ভিডিও</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Hind Siliguri for Bengali) -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs (Compat version for HTML script tag) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+            background-color: #0d0f17;
+            color: #e2e8f0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="pb-12">
+
+    <!-- Top Floating Fake Alert Banner (Dynamic from Firebase) -->
+    <div id="topBanner" class="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 text-white px-3 py-2 text-xs flex items-center justify-between shadow-lg sticky top-0 z-40 border-b border-blue-800/50">
+        <div class="flex items-center space-x-2 space-x-reverse cursor-pointer" onclick="handleAdRedirect()">
+            <div class="relative">
+                <i class="fa-solid fa-bell text-amber-400 text-base animate-bounce"></i>
+                <span class="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+            </div>
+            <div class="leading-tight">
+                <span id="bannerPhone" class="font-bold text-amber-300 tracking-wide text-xs block">+880-1629-372845</span>
+                <span id="bannerText" class="text-[11px] text-gray-200">অভিযোগ বা বোনাস ৫০,০০০ টাকা বুঝে নিন!</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 space-x-reverse">
+            <button onclick="handleAdRedirect()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded text-[11px] shadow transition-all">
+                OK
+            </button>
+            <button onclick="document.getElementById('topBanner').style.display='none'" class="text-gray-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Header Section (Dynamic from Firebase) -->
+    <header class="px-4 py-3 bg-[#131722]/90 backdrop-blur-md border-b border-gray-800/80 sticky top-[41px] z-30">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2 space-x-reverse cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-600 to-orange-500 flex items-center justify-center shadow-lg shadow-red-600/30">
+                    <i class="fa-solid fa-fire text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 id="siteTitle" class="text-xl font-bold text-white tracking-wide leading-none">Viral<span class="text-red-500">Hub</span></h1>
+                    <p id="siteTagline" class="text-[10px] text-gray-400 font-medium">ভাইরাল মিম ভিডিও</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mt-3 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="searchInput" oninput="filterVideos()" placeholder="মিম সার্চ করুন (যেমন: হাসির, তামাশা)..." class="w-full bg-[#1e2330] border border-gray-700/60 rounded-xl pl-9 pr-4 py-2 text-xs text-gray-200 focus:outline-none focus:border-red-500/80 transition-all placeholder-gray-500">
+        </div>
+    </header>
+
+    <!-- Category Pills Section -->
+    <div class="px-4 py-3 flex items-center space-x-2 space-x-reverse overflow-x-auto no-scrollbar border-b border-gray-800/40 bg-[#0d0f17]">
+        <button onclick="filterCategory('all')" class="cat-btn active bg-red-600 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-md transition-all">
+            🔥 Viral Videos
+        </button>
+        <button onclick="filterCategory('funny')" class="cat-btn bg-[#1e2330] hover:bg-gray-800 text-gray-300 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-gray-700/50 transition-all">
+            🤣 হাসির মিম
+        </button>
+        <button onclick="filterCategory('trending')" class="cat-btn bg-[#1e2330] hover:bg-gray-800 text-gray-300 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-gray-700/50 transition-all">
+            ⚡ ট্রেন্ডিং
+        </button>
+        <button onclick="filterCategory('deshi')" class="cat-btn bg-[#1e2330] hover:bg-gray-800 text-gray-300 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-gray-700/50 transition-all">
+            🇧🇩 দেশি ভাইরাল
+        </button>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="px-3 py-4">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <h2 class="text-sm font-bold text-gray-200 flex items-center space-x-2 space-x-reverse">
+                <i class="fa-solid fa-fire text-red-500 animate-pulse"></i>
+                <span>Viral Videos</span>
+            </h2>
+            <span id="videoCount" class="text-[11px] text-gray-400 bg-[#1e2330] px-2 py-0.5 rounded-full font-medium">0 টি ভিডিও</span>
+        </div>
+
+        <!-- Dynamic Video Grid -->
+        <div id="videoGrid" class="grid grid-cols-2 gap-2.5 sm:gap-3.5"></div>
+    </main>
+
+    <!-- Embedded Video Player Modal -->
+    <div id="videoModal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center hidden p-2 sm:p-4">
+        <button onclick="closeVideoModal()" class="absolute top-3 right-3 z-50 w-10 h-10 bg-gray-800/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all shadow-lg border border-gray-700/50">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        <div class="w-full max-w-xl bg-[#131722] rounded-2xl overflow-hidden border border-gray-800 shadow-2xl flex flex-col">
+            <div class="relative bg-black aspect-video flex items-center justify-center">
+                <video id="mainVideoPlayer" controls class="w-full h-full object-contain" onended="onVideoEnded()"></video>
+            </div>
+
+            <div class="p-3.5 bg-[#131722]">
+                <h3 id="modalVideoTitle" class="text-sm font-bold text-white mb-2 line-clamp-2"></h3>
+                
+                <!-- In-Player Banner Ad Spot (Dynamic from Firebase) -->
+                <div onclick="handleAdRedirect()" class="mt-2 p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-red-500/10 to-purple-500/10 border border-amber-500/30 flex items-center justify-between cursor-pointer hover:border-amber-400 transition-all shadow-sm">
+                    <div class="flex items-center space-x-2.5 space-x-reverse">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">
+                            <i class="fa-solid fa-gift text-base"></i>
+                        </div>
+                        <div>
+                            <p id="inPlayerAdTitle" class="text-xs font-bold text-amber-300">Playwin50 - ৫০,০০০ টাকা বোনাস!</p>
+                            <p id="inPlayerAdSub" class="text-[10px] text-gray-400">প্রথমবার ডিপোজিট করলে ১০০% বোনাস</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] bg-amber-500 text-black font-bold px-2 py-1 rounded shadow">ক্লেম করুন</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script with Firebase -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDLkoB5RFx0XEJBFAyfYBbiQxJwsWtMS20",
+            authDomain: "jrs-viralhub.firebaseapp.com",
+            databaseURL: "https://jrs-viralhub-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "jrs-viralhub",
+            storageBucket: "jrs-viralhub.firebasestorage.app",
+            messagingSenderId: "728941745307",
+            appId: "1:728941745307:web:768007f9eb65c08401623e",
+            measurementId: "G-DQMWD84FJQ"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let defaultAdUrl = "https://juegotragaperras.com/click?key=540";
+        let globalVideosList = [];
+        let clickedVideoTracker = {};
+        let activeCategory = 'all';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            listenToSettings();
+            listenToVideos();
+        });
+
+        // Sync Site Settings from Firebase
+        function listenToSettings() {
+            db.ref('settings').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    if (data.directAdUrl) defaultAdUrl = data.directAdUrl;
+                    if (data.bannerPhone) document.getElementById('bannerPhone').innerText = data.bannerPhone;
+                    if (data.bannerText) document.getElementById('bannerText').innerText = data.bannerText;
+                    if (data.siteTitle) document.getElementById('siteTitle').innerHTML = data.siteTitle;
+                    if (data.siteTagline) document.getElementById('siteTagline').innerText = data.siteTagline;
+                    if (data.inPlayerAdTitle) document.getElementById('inPlayerAdTitle').innerText = data.inPlayerAdTitle;
+                    if (data.inPlayerAdSub) document.getElementById('inPlayerAdSub').innerText = data.inPlayerAdSub;
+                }
+            });
+        }
+
+        // Sync Videos List from Firebase
+        function listenToVideos() {
+            db.ref('videos').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    globalVideosList = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+                } else {
+                    globalVideosList = [];
+                }
+                renderVideoCards();
+            });
+        }
+
+        function renderVideoCards() {
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = '';
+
+            const filtered = globalVideosList.filter(vid => {
+                const matchesCat = activeCategory === 'all' || vid.category === activeCategory;
+                const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+                const matchesSearch = vid.title.toLowerCase().includes(searchQuery);
+                return matchesCat && matchesSearch;
+            });
+
+            document.getElementById('videoCount').innerText = `${filtered.length} টি ভিডিও`;
+
+            let cardIndex = 0;
+            filtered.forEach((video) => {
+                cardIndex++;
+                grid.appendChild(createVideoCardElement(video));
+                if (cardIndex % 3 === 0) {
+                    grid.appendChild(createNativeAdCardElement());
+                }
+            });
+        }
+
+        function createVideoCardElement(video) {
+            const card = document.createElement('div');
+            card.className = "bg-[#131722] rounded-2xl overflow-hidden border border-gray-800/80 hover:border-gray-700 transition-all shadow-lg flex flex-col justify-between cursor-pointer group relative";
+            card.innerHTML = `
+                <div class="relative aspect-[4/3] bg-gray-900 overflow-hidden" onclick="handleCardClick('${video.id}')">
+                    <img src="${video.thumbnail}" alt="${video.title}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    <span class="absolute top-2 left-2 bg-red-600 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow">VIRAL</span>
+                    <span class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md text-gray-200 font-medium text-[10px] px-1.5 py-0.5 rounded border border-gray-700/50">${video.duration || '1:30'}</span>
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-all">
+                        <div class="w-10 h-10 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-play text-sm pl-0.5"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-2.5 flex flex-col justify-between flex-1" onclick="handleCardClick('${video.id}')">
+                    <h3 class="text-xs font-semibold text-gray-100 line-clamp-2 leading-snug mb-2 group-hover:text-red-400 transition-colors">${video.title}</h3>
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 border-t border-gray-800/60 pt-2">
+                        <span class="flex items-center space-x-1 space-x-reverse text-gray-400">
+                            <i class="fa-solid fa-eye text-red-500 text-[10px]"></i>
+                            <span>${video.views || '12K'}</span>
+                        </span>
+                        <span class="text-red-500 font-semibold text-[10px] flex items-center">
+                            দেখুন <i class="fa-solid fa-chevron-right text-[8px] mr-1"></i>
+                        </span>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function createNativeAdCardElement() {
+            const adCard = document.createElement('div');
+            adCard.className = "bg-[#131722] rounded-2xl overflow-hidden border border-amber-500/30 hover:border-amber-500/60 transition-all shadow-lg flex flex-col justify-between cursor-pointer group relative";
+            adCard.onclick = handleAdRedirect;
+            adCard.innerHTML = `
+                <div class="relative aspect-[4/3] bg-gray-900 overflow-hidden">
+                    <img src="https://picsum.photos/seed/casino/400/300" alt="Sponsor" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    <span class="absolute top-2 left-2 bg-amber-500 text-black font-bold text-[9px] px-2 py-0.5 rounded shadow">SPONSORED</span>
+                    <span class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md text-amber-300 font-medium text-[10px] px-1.5 py-0.5 rounded border border-amber-500/40">2:30</span>
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-all">
+                        <div class="w-10 h-10 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-play text-sm pl-0.5"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-2.5 flex flex-col justify-between flex-1 bg-gradient-to-b from-[#131722] to-amber-950/20">
+                    <h3 class="text-xs font-semibold text-amber-300 line-clamp-2 leading-snug mb-1">Playwin50 - এখনই জয়েন করুন! ৫০,০০০ টাকা পর্যন্ত বোনাস!</h3>
+                    <p class="text-[10px] text-gray-400 mb-2">প্রথম বার ডিপোজিট করলে ১০০% বোনাস</p>
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 border-t border-gray-800/60 pt-2">
+                        <span class="flex items-center space-x-1 space-x-reverse text-amber-400 font-medium">
+                            <i class="fa-solid fa-fire text-[10px]"></i>
+                            <span>100K Views</span>
+                        </span>
+                        <span class="bg-amber-500 text-black font-bold text-[10px] px-2 py-0.5 rounded shadow">ক্লেম করুন</span>
+                    </div>
+                </div>
+            `;
+            return adCard;
+        }
+
+        function handleCardClick(videoId) {
+            if (!clickedVideoTracker[videoId]) {
+                clickedVideoTracker[videoId] = true;
+                handleAdRedirect();
+            } else {
+                const selectedVideo = globalVideosList.find(v => v.id === videoId);
+                if (selectedVideo) openVideoModal(selectedVideo);
+            }
+        }
+
+        function handleAdRedirect() {
+            window.open(defaultAdUrl, '_blank');
+        }
+
+        function openVideoModal(video) {
+            const modal = document.getElementById('videoModal');
+            const player = document.getElementById('mainVideoPlayer');
+            document.getElementById('modalVideoTitle').innerText = video.title;
+            player.src = video.videoUrl;
+            modal.classList.remove('hidden');
+            player.play();
+        }
+
+        function closeVideoModal() {
+            const modal = document.getElementById('videoModal');
+            const player = document.getElementById('mainVideoPlayer');
+            player.pause();
+            player.src = "";
+            modal.classList.add('hidden');
+        }
+
+        function onVideoEnded() {
+            handleAdRedirect();
+        }
+
+        function filterCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-red-600', 'text-white');
+                btn.classList.add('bg-[#1e2330]', 'text-gray-300');
+            });
+            event.target.classList.remove('bg-[#1e2330]', 'text-gray-300');
+            event.target.classList.add('bg-red-600', 'text-white');
+            renderVideoCards();
+        }
+
+        function filterVideos() {
+            renderVideoCards();
+        }
+    </script>
+</body>
+  </html>
